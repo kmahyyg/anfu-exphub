@@ -25,6 +25,6 @@ This note is used to check if the vulnerbility detected by scanner via version f
 |High|CVE-2015-4796|Unspecified vulnerability in the Java VM component in Oracle Database Server 11.2.0.4, 12.1.0.1, and 12.1.0.2, when running on Windows, allows remote authenticated users to affect confidentiality, integrity, and availability via unknown vectors, a different vulnerability than CVE-2015-4888.|
 ||CVE-2014-2406|Unspecified vulnerability in the Core RDBMS component in Oracle Database Server 11.1.0.7, 11.2.0.3, 11.2.0.4, and 12.1.0.1 allows remote authenticated users to affect confidentiality, integrity, and availability via unknown vectors related to "Advisor" and "Select Any Dictionary" privileges.|
 ||CVE-2016-3609|Unspecified vulnerability in the OJVM component in Oracle Database Server 11.2.0.4, 12.1.0.1, and 12.1.0.2 allows remote authenticated users to affect confidentiality, integrity, and availability via unknown vectors.|
-||               |                                                              |
+|| CVE-2011-2301 | Unspecified vulnerability in the Oracle Text component in Oracle Database Server 10.1.0.5, 10.2.0.3, 10.2.0.4, and 11.1.0.7 allows remote authenticated users to affect confidentiality, integrity, and availability, related to CTXSYS.DRVDISP. |
 ||||
 ||||
