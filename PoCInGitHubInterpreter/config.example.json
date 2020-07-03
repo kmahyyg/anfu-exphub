@@ -1,0 +1,10 @@
+{
+    "PiGLocation": "../PoC-in-GitHub",
+    "PiGUpstream": "https://github.com/nomi-sec/PoC-in-GitHub.git",
+    "APIProxyEnabled": false,
+    "APISocks5ProxyAddr": {"http": "socks5h://127.0.0.1:1080", "https": "socks5h://127.0.0.1:1080"},
+    "GitHubToken": "",
+    "GitHubUsrName": "",
+    "GetDetailsFromCVEDetails": true,
+    "GetAvailablePoCFromPacketStormSec": true
+}
