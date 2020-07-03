@@ -26,5 +26,5 @@ This note is used to check if the vulnerbility detected by scanner via version f
 ||CVE-2014-2406|Unspecified vulnerability in the Core RDBMS component in Oracle Database Server 11.1.0.7, 11.2.0.3, 11.2.0.4, and 12.1.0.1 allows remote authenticated users to affect confidentiality, integrity, and availability via unknown vectors related to "Advisor" and "Select Any Dictionary" privileges.|
 ||CVE-2016-3609|Unspecified vulnerability in the OJVM component in Oracle Database Server 11.2.0.4, 12.1.0.1, and 12.1.0.2 allows remote authenticated users to affect confidentiality, integrity, and availability via unknown vectors.|
 || CVE-2011-2301 | Unspecified vulnerability in the Oracle Text component in Oracle Database Server 10.1.0.5, 10.2.0.3, 10.2.0.4, and 11.1.0.7 allows remote authenticated users to affect confidentiality, integrity, and availability, related to CTXSYS.DRVDISP. |
-||||
-||||
+||CVE-2016-0798|Memory leak in the SRP_VBASE_get_by_user implementation in OpenSSL 1.0.1 before 1.0.1s and 1.0.2 before 1.0.2g allows remote attackers to cause a denial of service (memory consumption) by providing an invalid username in a connection attempt, related to apps/s_server.c and crypto/srp/srp_vfy.c.|
+||               |                                                              |
