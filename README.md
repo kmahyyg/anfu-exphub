@@ -6,7 +6,7 @@ Might co-operate with https://github.com/kmahyyg/my-htb-tools
 
 # Copyright
 
-By origin author.
+By original author.
 
 # Collection
 
