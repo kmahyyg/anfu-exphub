@@ -13,6 +13,13 @@ This Interpreter will help you from a CVE number to get PoC.
 
 ## Usage
 
+- Only tested on Python 3.6+
+- `pip3 install -r requirements.txt`
+- Copy `config.example.json` and rename to `config.json`
+- Go and Get a New GitHub Personal Access Token with `repo` perms.
+- Set `config.json` according to your environment.
+- Run `python3 PoC-in-GitHub-Interpreter.py CVE-2017-0144`.
+
 ## License
 
  PoC-in-GitHub Interpreter
