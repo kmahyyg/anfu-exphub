@@ -10,3 +10,6 @@
 [submodule "CVE-2019-11043"]
 	path = CVE-2019-11043
 	url = https://github.com/neex/phuip-fpizdam
+[submodule "CVE-2019-0211_OR_6977"]
+	path = CVE-2019-0211_OR_6977
+	url = https://github.com/ozkanbilge/Apache-Exploit-2019.git
