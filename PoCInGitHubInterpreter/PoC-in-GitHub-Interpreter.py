@@ -108,7 +108,10 @@ def getGitRepoLang(repourl: str) -> str:
     r = requests.Session()
     res = r.get("https://api.github.com/repos/{}/languages".format(repourl), auth=HTTPBasicAuth(configGlobal["GitHubUsrName"], configGlobal["GitHubToken"]))
     if res.status_code == 200:
-        return list(res.json().keys())[0]
+        try:
+            return list(res.json().keys())[0]
+        except IndexError:
+            return "Empty Git Repo"
     else:
         return ""
 
