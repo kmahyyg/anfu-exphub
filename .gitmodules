@@ -13,3 +13,6 @@
 [submodule "CVE-2019-0211_OR_6977"]
 	path = CVE-2019-0211_OR_6977
 	url = https://github.com/ozkanbilge/Apache-Exploit-2019.git
+[submodule "CVE-2018-6981_AND_6982"]
+	path = CVE-2018-6981_AND_6982
+	url = https://github.com/heaphopopotamus/vmxnet3Hunter.git
