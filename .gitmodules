@@ -4,3 +4,6 @@
 [submodule "PoC-in-GitHub"]
 	path = PoC-in-GitHub
 	url = https://github.com/nomi-sec/PoC-in-GitHub.git
+[submodule "CVE-2017-3599"]
+	path = CVE-2017-3599
+	url = https://github.com/SECFORCE/CVE-2017-3599

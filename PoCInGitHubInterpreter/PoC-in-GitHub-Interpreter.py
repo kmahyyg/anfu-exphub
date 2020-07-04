@@ -47,7 +47,7 @@ def checkFolderExists(abspath: str) -> bool:
 
 def searchPSS(cvestr: str) -> dict:
     errmsg = "Your Request Returned Nothing of Interest"
-    baseurl = "https://packetstormsecurity.com/"
+    baseurl = "https://packetstormsecurity.com"
     resdict = {}
     r = requests.Session()
     r.get(baseurl)
