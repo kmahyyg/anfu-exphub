@@ -196,7 +196,7 @@ def main():
         if not detectExpDB():
             print("Don't forget to search ExploitDB and MSF.")
         else:
-            searchExpDB(cveipt)
+            print(searchExpDB(cveipt))
         print("------------- Done ------------")
     else:
         print("Please Clone PiGDB from {} First.".format(conf["PiGUpstream"]))
