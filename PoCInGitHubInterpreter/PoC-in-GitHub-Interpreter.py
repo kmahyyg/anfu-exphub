@@ -28,6 +28,9 @@ import pathlib
 from bs4 import BeautifulSoup
 import argparse
 import html
+import sys
+import shutil
+import subprocess
 
 configGlobal = None
 
@@ -70,16 +73,19 @@ def searchCVEDetails(cveid: str) -> str:
     errmsg = "Unknown CVE ID"
     r = requests.Session()
     reshtml = r.get("https://www.cvedetails.com/cve/{}/".format(cveid))
-    if errmsg in reshtml.text:
-        raise IOError("CVE Not Found!")
-    else:
-        soup = BeautifulSoup(reshtml.text, "lxml")
-        descr = soup.find("meta", attrs={"name":"description"})["content"]
-        if descr:
-            descrstr = "| " + " | ".join(html.unescape(descr).split(" : ")) + " |"
+    try:
+        if errmsg in reshtml.text:
+            raise IOError("CVE Not Found!")
         else:
-            descrstr = "Error when Split Description from CVEDetails"
-        return descrstr if descr else "Extract Data Error"
+            soup = BeautifulSoup(reshtml.text, "lxml")
+            descr = soup.find("meta", attrs={"name":"description"})["content"]
+            if descr:
+                descrstr = "| " + " | ".join(html.unescape(descr).split(" : ")) + " |"
+            else:
+                descrstr = "CVEDetails.com: Error when Split Description from CVEDetails"
+            return descrstr if descr else "CVEDetails.com: Extract Data Error"
+    except:
+        return "CVEDetails.com: Mostly CVE ID Not Found, Check if error occured."
 
 
 def readUsrConfig():
@@ -111,7 +117,7 @@ def getGitRepoLang(repourl: str) -> str:
         try:
             return list(res.json().keys())[0]
         except IndexError:
-            return "Empty Git Repo"
+            return "Get Git Repo Lang: Empty Git Repo"
     else:
         return ""
 
@@ -131,6 +137,24 @@ def searchPiGDB(cveno: list) -> list:
     else:
         pass
     return reslst
+
+
+def searchExpDB(cvenumIpt):
+    print("Searching ExploitDB...")
+    return subprocess.check_output(["searchsploit", cvenumIpt])
+
+
+def detectExpDB():
+    flag1 = False
+    flag2 = False
+    if "linux" in sys.platform:
+        flag1 = True
+    if shutil.which('searchsploit'):
+        flag2 = True
+    if flag1 and flag2:
+        return True
+    else:
+        return False
 
 
 def main():
@@ -169,7 +193,10 @@ def main():
         else:
             pigdbresstr = "Empty Result From PiGDB.\n"
         print(pigdbresstr)
-        print("Don't forget to search ExploitDB and MSF.")
+        if not detectExpDB():
+            print("Don't forget to search ExploitDB and MSF.")
+        else:
+            searchExpDB(cveipt)
         print("------------- Done ------------")
     else:
         print("Please Clone PiGDB from {} First.".format(conf["PiGUpstream"]))
