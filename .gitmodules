@@ -16,3 +16,6 @@
 [submodule "CVE-2018-6981_AND_6982"]
 	path = CVE-2018-6981_AND_6982
 	url = https://github.com/heaphopopotamus/vmxnet3Hunter.git
+[submodule "WeblogicScan"]
+	path = WeblogicScan
+	url = https://github.com/rabbitmask/WeblogicScan.git
