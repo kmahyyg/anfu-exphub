@@ -182,8 +182,8 @@ async def runWS_rce(url, ssl, payload):
         await wsapp.send(json.dumps(currcmd))
         # recv 5 msg
         pingmsg = ""
+        stage3Logger.warning("Please wait patiently, it might cost about 1min...")
         for i in range(5):
-            stage3Logger.warning("Please wait patiently, it might cost about 1min...")
             initmsg = await wsapp.recv()
             if json.loads(initmsg)["type"] == "PING":
                 pingmsg = initmsg
