@@ -7,7 +7,21 @@
 
 Can be installed using: `pip3 install -r requirements.txt`
 
+## Limitation
+
+- Previous Connection on the server side might be reused (which was I couldn't control)
+- Program might need to wait for a few seconds (same as the TCP Socket, you always don't know what's next)
+- Interactive TTY is not implemented because possible WS wrapper is relatively high workload.
+
 ## Usage
+
+- Switch to your favorite virtual Python environment
+- Install dependencies: `pip3 install -r requirements.txt`
+- Open `exp.py`, after the `DON'T CHANGE` block, you might need to change the `User MODIFICATION PART` like the path of jumpserver installation dir or miscellaneous part counter threshold or something else you want.
+- Run `python3 ./exp.py http(s)://IP:PORT`
+- The program will interactively guide you thorough the whole process.
+
+**Note: Since the assets and system users might be modified and log files is rotating, you might need to change COUNT_THRESHOLD and select a proper asset to hack.**
 
 ## Reference
 

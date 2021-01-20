@@ -44,8 +44,6 @@ PATH_PAYLOAD_1 = '/ws/ops/tasks/log/'
 PATH_PAYLOAD_2 = '/api/v1/users/connection-token/?user-only=1'
 PATH_PAYLOAD_2_ALT = '/api/v1/authentication/connection-token/?user-only=1'
 REFERER_PAYLOAD_2 = '/luna/?_={tms}'.format(tms=str(int(datetime.timestamp(datetime.now()))))
-COUNT_THRESHOLD = 10    # This is the number of assets id retrieve threshold AT LEAST, it seems that should not need to change
-# seems that the program either has bug or unknown reason, only tracked the 13?-latest log lines.
 
 GLOBAL_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
@@ -56,16 +54,21 @@ GLOBAL_TIMEOUT=5
 PATH_PAYLOAD_3 = '/koko/ws/token/?target_id={tid}'
 # ----- DO NOT CHANGE, POST ---[BLOCK END]---
 
-
+# User MODIFICATION PART
 # This should be changed according to current situation
+
 # Stage 1
 PAYLOAD_1 = '{"task":"/opt/jumpserver/logs/gunicorn"}'
 RETRYCOUNT_THRESHOLD = 500  # This is the max number of frames received from WS Logging stream
 # If after RETRYCOUNT_THRESHOLD frames, the related data still cannot be found, it will get stuck.
+COUNT_THRESHOLD = 10    # This is the number of assets id retrieve threshold AT LEAST, it seems that should not need to change
+# seems that the program either has bug or unknown reason, only tracked the 13?-latest log lines.
 # If it CANNOT find enough number of COUNT_THRESHOLD assets, it will get stuck.
+
 # Stage 2
 PATH_PAYLOAD_2_USE = PATH_PAYLOAD_2
 
+# MAIN PROGRAM START HERE, DON'T CHANGE
 
 class BasicInfo(object):
     def __init__(self, oriurl):
