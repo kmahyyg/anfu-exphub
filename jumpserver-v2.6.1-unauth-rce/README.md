@@ -25,11 +25,9 @@ Can be installed using: `pip3 install -r requirements.txt`
 
 ## Demo
 
-<div id="mydemo_asc">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@2.6.1/resources/public/css/asciinema-player.min.css">
-<asciinema-player src="https://raw.githubusercontent.com/kmahyyg/anfu-exphub/master/jumpserver-v2.6.1-unauth-rce/jmsexp.cast" speed="1.5"></asciinema-player>
-<script src="https://cdn.jsdelivr.net/npm/asciinema-player@2.6.1/resources/public/js/asciinema-player.min.js"></script>
-</div>
+<p align="center">
+  <img width="800" src="https://cdn.jsdelivr.net/gh/kmahyyg/anfu-exphub@master/jumpserver-v2.6.1-unauth-rce/jmsexp.svg">
+</p>
 
 ## Reference
 
