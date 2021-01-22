@@ -1,6 +1,6 @@
-# kmqax-exphub
+# anfu-exphub
 
-My Exploit/PoC Hub while working in KMQAX.
+My Exploit/PoC Hub.
 
 Might co-operate with https://github.com/kmahyyg/my-htb-tools
 
