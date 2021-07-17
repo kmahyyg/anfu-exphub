@@ -19,3 +19,6 @@
 [submodule "WeblogicScan"]
 	path = WeblogicScan
 	url = https://github.com/rabbitmask/WeblogicScan.git
+[submodule "TongDaOA-Fake-User"]
+	path = TongDaOA-Fake-User
+	url = https://github.com/NS-Sp4ce/TongDaOA-Fake-User
